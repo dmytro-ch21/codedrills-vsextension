@@ -1,0 +1,148 @@
+{
+  "name": "codedrills",
+  "displayName": "CodeDrills",
+  "description": "Turn any repository into an interactive, beginner-friendly coding practice environment. Automatically run unit tests, track progress, and generate detailed test reports—all directly within VS Code.",
+  "version": "0.1.0",
+  "keywords": [
+    "coding",
+    "practice",
+    "autograding",
+    "unit testing",
+    "learning",
+    "education",
+    "reporting",
+    "beginners"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dmytro-ch21/codedrills-extension.git"
+  },
+  "icon": "media/codedrills-logo.png",
+  "engines": {
+    "vscode": "^1.97.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:codeDrills.refreshExercises",
+    "onView:codeDrillsExplorer"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "codeDrills.refreshExercises",
+        "title": "Refresh Exercises",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "codeDrills.runTests",
+        "title": "Run Tests",
+        "icon": "$(play-circle)"
+      },
+      {
+        "command": "codeDrills.generateReport",
+        "title": "Generate Report",
+        "icon": "$(report)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "codedrills",
+          "title": "CodeDrills",
+          "icon": "media/icons/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "codedrills": [
+        {
+          "id": "codeDrillsExplorer",
+          "name": "Practice Exercises"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "codeDrills.refreshExercises",
+          "when": "view == codeDrillsExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "codeDrills.generateReport",
+          "when": "view == codeDrillsExplorer",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "codeDrills.runTests",
+          "when": "viewItem == exercise",
+          "group": "inline"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "codeDrills.runTests",
+          "group": "navigation",
+          "when": "resourceFilename == README.md"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "CodeDrills",
+      "properties": {
+        "codeDrills.pythonPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to Python interpreter (leave empty to use default)"
+        },
+        "codeDrills.automaticallyInstallDependencies": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically install required dependencies like pytest"
+        },
+        "codeDrills.testFramework": {
+          "type": "string",
+          "enum": [
+            "pytest",
+            "unittest"
+          ],
+          "default": "pytest",
+          "description": "Python test framework to use"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^7.1.3",
+    "@types/markdown-it": "^12.0.3",
+    "@types/mocha": "^8.2.2",
+    "@types/node": "^14.14.37",
+    "@types/proxyquire": "^1.3.31",
+    "@types/sinon": "^17.0.4",
+    "@types/vscode": "^1.97.0",
+    "@typescript-eslint/eslint-plugin": "^4.28.0",
+    "@typescript-eslint/parser": "^4.28.0",
+    "eslint": "^7.27.0",
+    "glob": "^7.1.7",
+    "mocha": "^9.0.0",
+    "proxyquire": "^2.1.3",
+    "sinon": "^19.0.2",
+    "typescript": "^4.3.2",
+    "vscode-test": "^1.5.2"
+  },
+  "dependencies": {
+    "markdown-it": "^12.0.6"
+  }
+}
