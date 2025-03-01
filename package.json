@@ -1,7 +1,7 @@
 {
   "name": "codedrills",
   "displayName": "CodeDrills",
-  "description": "Turn any repository into an interactive, beginner-friendly coding practice environment. Automatically run unit tests, track progress, and generate detailed test reports—all directly within VS Code.",
+  "description": "Turn a repository into an interactive, beginner-friendly coding practice environment.",
   "version": "0.1.0",
   "license": "MIT",
   "publisher": "dmytrochobotar",

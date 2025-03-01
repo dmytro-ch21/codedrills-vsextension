@@ -1,7 +1,5 @@
 # CodeDrills
 
-![CodeDrills Logo](./media/codedrills-logo.png)
-
 **Practice coding exercises with automated testing and progress tracking**
 
 CodeDrills helps programmers practice coding exercises efficiently through immediate feedback and progress tracking.
