@@ -2,7 +2,7 @@
   "name": "codedrills",
   "displayName": "CodeDrills",
   "description": "Turn a repository into an interactive, beginner-friendly coding practice environment.",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "license": "MIT",
   "publisher": "dmytrochobotar",
   "keywords": [

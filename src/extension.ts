@@ -173,20 +173,47 @@ export async function activate(context: vscode.ExtensionContext) {
     }),
 
     vscode.commands.registerCommand('codeDrills.generateReport', async () => {
-      const reportPath = await reportGenerator.generateReport(taskProvider.getTasks());
-      
-      const uri = vscode.Uri.file(reportPath);
-      
       try {
-        await vscode.commands.executeCommand('htmlPreview.openPreview', uri);
-      } catch (error) {
-        const doc = await vscode.workspace.openTextDocument(uri);
-        await vscode.window.showTextDocument(doc);
+        const tasks = taskProvider.getTasks();
+        const tasksCount = tasks.length;
         
-        vscode.env.openExternal(uri);
+        const reportPath = await reportGenerator.generateReport(tasks);
+        const uri = vscode.Uri.file(reportPath);
+        
+        taskProvider.refresh();
+        taskTreeDataProvider.refresh();
+        
+        setTimeout(() => {
+          const refreshedTasks = taskProvider.getTasks();
+          if (refreshedTasks.length === 0 && tasksCount > 0) {
+            console.log('Tasks list is empty after report generation - forcing second refresh');
+            taskProvider.refresh();
+            taskTreeDataProvider.refresh();
+          }
+        }, 500);
+        
+        const viewInBrowser = 'View in Browser';
+        const openInVSCode = 'Open in VS Code';
+        const showInFinder = 'Show in Finder/Explorer';
+        
+        const choice = await vscode.window.showInformationMessage(
+          `Report generated successfully at: ${reportPath}`,
+          viewInBrowser, 
+          openInVSCode,
+          showInFinder
+        );
+        
+        if (choice === viewInBrowser) {
+          vscode.env.openExternal(uri);
+        } else if (choice === openInVSCode) {
+          const doc = await vscode.workspace.openTextDocument(uri);
+          await vscode.window.showTextDocument(doc);
+        } else if (choice === showInFinder) {
+          vscode.commands.executeCommand('revealFileInOS', uri);
+        }
+      } catch (error) {
+        vscode.window.showErrorMessage(`Error generating report: ${error instanceof Error ? error.message : String(error)}`);
       }
-      
-      vscode.window.showInformationMessage(`Practice progress report generated at: ${reportPath}`);
     }),
 
     vscode.commands.registerCommand('codeDrills.clearTestResults', () => {
