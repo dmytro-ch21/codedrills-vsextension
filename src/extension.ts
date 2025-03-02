@@ -8,7 +8,18 @@ import * as path from 'path';
 import { showTemporaryInformationMessage, showTemporaryErrorMessage } from './utils/notifications';
 import { DependencyManager } from './dependencyManager';
 
+let globalState: {
+  disposables?: vscode.Disposable[];
+} | undefined;
+
+export function globalStateForTesting(): any {
+  return globalState;
+}
+
 export async function activate(context: vscode.ExtensionContext) {
+  await vscode.commands.executeCommand('setContext', 'codeDrills.active', true);
+
+  globalState = { disposables: [] };
   console.log('CodeDrills extension is now active');
 
   const dependencyManager = new DependencyManager();
@@ -18,7 +29,7 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.window.showWarningMessage('CodeDrills: Some dependencies are missing. Python test execution may not work properly.');
   }
 
-  const taskProvider = new TaskProvider();
+  const taskProvider = new TaskProvider(context);
   const testRunner = new TestRunner();
   const reportGenerator = new ReportGenerator(context.extensionUri);
 
@@ -71,6 +82,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
       const readmePath = vscode.Uri.file(`${taskPath}/README.md`);
       const solutionFile = await findSolutionFile(taskPath);
+
+      await vscode.commands.executeCommand('setContext', 'codeDrills.isExerciseReadme', true);
 
       if (solutionFile) {
         const solutionDocument = await vscode.workspace.openTextDocument(solutionFile);
@@ -164,10 +177,43 @@ export async function activate(context: vscode.ExtensionContext) {
       const uri = vscode.Uri.file(reportPath);
       vscode.env.openExternal(uri);
       vscode.window.showInformationMessage('Practice progress report generated successfully');
+    }),
+
+    vscode.commands.registerCommand('codeDrills.clearTestResults', () => {
+      taskProvider.clearTaskStatuses();
+      taskTreeDataProvider.refresh();
+      showTemporaryInformationMessage('Test results cleared');
     })
   );
+
+  context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
+    if (editor) {
+      const document = editor.document;
+      if (document.fileName.endsWith('README.md')) {
+        const directoryPath = path.dirname(document.uri.fsPath);
+        const isExerciseReadme = !!taskProvider.getTaskByPath(directoryPath);
+        
+        vscode.commands.executeCommand('setContext', 'codeDrills.isExerciseReadme', isExerciseReadme);
+      } else {
+        vscode.commands.executeCommand('setContext', 'codeDrills.isExerciseReadme', false);
+      }
+    }
+  }));
 
   taskProvider.refresh();
 }
 
-export function deactivate() { }
+export function deactivate() { 
+  vscode.commands.executeCommand('setContext', 'codeDrills.active', false);
+
+  if (globalState) {
+    for (const terminal of vscode.window.terminals) {
+      if (terminal.name === 'CodeDrills Tests') {
+        terminal.dispose();
+      }
+    }
+    globalState = undefined;
+  }
+  
+  console.log('CodeDrills extension has been deactivated');
+}

@@ -1,6 +1,6 @@
 import * as sinon from 'sinon';
-import * as fs from 'fs';
-import { createMockStats, mockDirents } from './testHelpers';
+import * as vscode from 'vscode';
+
 
 export function createFsMock(sandbox: sinon.SinonSandbox) {
   return {
@@ -46,5 +46,59 @@ export function createVscodeMock(sandbox: sinon.SinonSandbox) {
     Uri: {
       file: sandbox.stub().callsFake(path => ({ fsPath: path }))
     }
+  };
+}
+
+export function createMockExtensionContext(
+  sandbox: sinon.SinonSandbox,
+  options?: {
+    workspaceState?: {
+      get: (key: string) => any;
+      update: (key: string, value: any) => Thenable<void>;
+      keys: () => string[];
+    }
+  }
+): vscode.ExtensionContext {
+  const mockStorage: Record<string, any> = {};
+  const onDidChangeEvent = new vscode.EventEmitter<vscode.SecretStorageChangeEvent>();
+
+  return {
+    subscriptions: [],
+    extensionPath: '/mock/extension',
+    extensionUri: { fsPath: '/mock/extension' } as any,
+    storagePath: '/mock/storage', 
+    globalStoragePath: '/mock/globalStorage', 
+    logPath: '/mock/log',
+    extension: {} as vscode.Extension<any>,
+    languageModelAccessInformation: {} as vscode.LanguageModelAccessInformation,
+    globalState: {
+      get: (key: string) => mockStorage[key],
+      update: (key: string, value: any) => {
+        mockStorage[key] = value;
+        return Promise.resolve();
+      },
+      setKeysForSync: sandbox.stub(),
+      keys: () => Object.keys(mockStorage)
+    },
+    workspaceState: options?.workspaceState ?? {
+      get: (key: string) => mockStorage[key],
+      update: (key: string, value: any) => {
+        mockStorage[key] = value;
+        return Promise.resolve();
+      },
+      keys: () => Object.keys(mockStorage)
+    },
+    secrets: {
+      get: sandbox.stub().resolves(''),
+      store: sandbox.stub().resolves(),
+      delete: sandbox.stub().resolves(),
+      onDidChange: onDidChangeEvent.event
+    },
+    storageUri: { fsPath: '/mock/storage' } as any,
+    globalStorageUri: { fsPath: '/mock/globalStorage' } as any,
+    logUri: { fsPath: '/mock/log' } as any,
+    extensionMode: vscode.ExtensionMode.Test,
+    asAbsolutePath: sandbox.stub().callsFake(p => `/mock/extension/${p}`),
+    environmentVariableCollection: {} as any
   };
 }

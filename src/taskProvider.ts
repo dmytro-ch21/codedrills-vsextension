@@ -30,8 +30,11 @@ export class TaskProvider {
   private tasks: Task[] = [];
   private _onDidChangeTask = new vscode.EventEmitter<Task>();
   readonly onDidChangeTask = this._onDidChangeTask.event;
+  private context: vscode.ExtensionContext;
 
-  constructor() { }
+  constructor(context: vscode.ExtensionContext) {
+    this.context = context;
+  }
 
   public refresh(): void {
     this.tasks = [];
@@ -48,9 +51,9 @@ export class TaskProvider {
       this.scanDirectory(folder.uri.fsPath);
     }
 
+    this.loadTaskStatuses();
+
     console.log(`Found ${this.tasks.length} exercises.`);
-
-
     this.tasks.sort((a, b) => a.name.localeCompare(b.name));
   }
 
@@ -58,12 +61,14 @@ export class TaskProvider {
     try {
       const files = fs.readdirSync(directoryPath);
 
+      const isWorkspaceRoot = vscode.workspace.workspaceFolders?.some(folder => 
+        folder.uri.fsPath === directoryPath
+      ) ?? false;
 
-      if (files.includes('README.md')) {
+      if (files.includes('README.md') && !isWorkspaceRoot) {
         const readmePath = path.join(directoryPath, 'README.md');
         const readmeContent = fs.readFileSync(readmePath, 'utf8');
         const taskName = path.basename(directoryPath);
-
 
         const visibleFiles = files.filter(file => {
           const filePath = path.join(directoryPath, file);
@@ -170,6 +175,26 @@ export class TaskProvider {
     return this.getTaskByPath(directoryPath);
   }
 
+  private saveTaskStatuses(): void {
+    const statusMap: Record<string, TaskStatus> = {};
+    
+    for (const task of this.tasks) {
+      statusMap[task.path] = task.status;
+    }
+    
+    this.context.workspaceState.update('codeDrills.taskStatuses', statusMap);
+  }
+
+  private loadTaskStatuses(): void {
+    const statusMap = this.context.workspaceState.get<Record<string, TaskStatus>>('codeDrills.taskStatuses') || {};
+    
+    for (const task of this.tasks) {
+      if (statusMap[task.path]) {
+        task.status = statusMap[task.path];
+      }
+    }
+  }
+
   public updateTaskStatus(taskPath: string, result: TestResult): void {
     const task = this.getTaskByPath(taskPath);
     if (task) {
@@ -179,6 +204,7 @@ export class TaskProvider {
         message: result.message
       };
 
+      this.saveTaskStatuses();
       this._onDidChangeTask.fire(task);
     }
   }
@@ -194,5 +220,19 @@ export class TaskProvider {
     ];
 
     return testPatterns.some(pattern => pattern.test(filename));
+  }
+
+  public clearTaskStatuses(): void {
+    for (const task of this.tasks) {
+      task.status = {
+        tested: false,
+        passed: false,
+        message: undefined
+      };
+    }
+    
+    this.saveTaskStatuses();
+    
+    this.tasks.forEach(task => this._onDidChangeTask.fire(task));
   }
 }

@@ -2,7 +2,7 @@
   "name": "codedrills",
   "displayName": "CodeDrills",
   "description": "Turn a repository into an interactive, beginner-friendly coding practice environment.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "license": "MIT",
   "publisher": "dmytrochobotar",
   "keywords": [
@@ -26,10 +26,6 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onCommand:codeDrills.refreshExercises",
-    "onView:codeDrillsExplorer"
-  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -47,6 +43,11 @@
         "command": "codeDrills.generateReport",
         "title": "Generate Report",
         "icon": "$(report)"
+      },
+      {
+        "command": "codeDrills.clearTestResults",
+        "title": "Clear All Test Results",
+        "icon": "$(clear-all)"
       }
     ],
     "viewsContainers": {
@@ -77,6 +78,11 @@
           "command": "codeDrills.generateReport",
           "when": "view == codeDrillsExplorer",
           "group": "navigation"
+        },
+        {
+          "command": "codeDrills.clearTestResults",
+          "when": "view == codeDrillsExplorer",
+          "group": "navigation"
         }
       ],
       "view/item/context": [
@@ -90,7 +96,7 @@
         {
           "command": "codeDrills.runTests",
           "group": "navigation",
-          "when": "resourceFilename == README.md"
+          "when": "resourceFilename == README.md && codeDrills.active && codeDrills.isExerciseReadme"
         }
       ]
     },
