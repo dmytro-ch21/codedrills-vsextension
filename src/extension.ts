@@ -174,9 +174,19 @@ export async function activate(context: vscode.ExtensionContext) {
 
     vscode.commands.registerCommand('codeDrills.generateReport', async () => {
       const reportPath = await reportGenerator.generateReport(taskProvider.getTasks());
+      
       const uri = vscode.Uri.file(reportPath);
-      vscode.env.openExternal(uri);
-      vscode.window.showInformationMessage('Practice progress report generated successfully');
+      
+      try {
+        await vscode.commands.executeCommand('htmlPreview.openPreview', uri);
+      } catch (error) {
+        const doc = await vscode.workspace.openTextDocument(uri);
+        await vscode.window.showTextDocument(doc);
+        
+        vscode.env.openExternal(uri);
+      }
+      
+      vscode.window.showInformationMessage(`Practice progress report generated at: ${reportPath}`);
     }),
 
     vscode.commands.registerCommand('codeDrills.clearTestResults', () => {
